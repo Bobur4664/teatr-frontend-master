@@ -1,0 +1,37 @@
+# Starts the theatre deploy in the teatr repo once CI passes on master.
+#
+# TEATR_DEPLOY_TOKEN can only start workflows in teatr (Actions permission, no
+# code access), and the deploy it starts only ships master commits that passed CI.
+# It lives in the deploy-trigger environment, which only master can use, so a
+# workflow on a PR branch can't read it.
+#
+# This file runs from master even when CI ran elsewhere: workflow_run always uses
+# the default branch's copy.
+
+name: Trigger deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [master]
+
+permissions: {}
+
+jobs:
+  trigger:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    environment: deploy-trigger
+    steps:
+      - name: Start the theatre deploy
+        env:
+          GH_TOKEN: ${{ secrets.TEATR_DEPLOY_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::warning::TEATR_DEPLOY_TOKEN isn't set, so the deploy wasn't started. Run it from teatr's Actions tab."
+            exit 0
+          fi
+          gh api -X POST repos/${{ github.repository_owner }}/teatr/actions/workflows/deploy-theatres.yml/dispatches \
+            -f ref=master -f 'inputs[target]=pending changes'
+          echo "Started Deploy theatres in teatr."

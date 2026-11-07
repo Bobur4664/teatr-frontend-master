@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <title>Oʻzbekiston davlat yosh tomoshabinlar teatri</title>
+    <style>
+      html.theatre-loading,
+      html.theatre-loading body {
+        overflow: hidden;
+      }
+
+      #theatre-curtain-loader {
+        position: fixed;
+        z-index: 2147483000;
+        inset: 0;
+        display: grid;
+        overflow: hidden;
+        place-items: center;
+        background: #070607;
+        color: #fff;
+        isolation: isolate;
+      }
+
+      #theatre-curtain-loader .theatre-curtain__panel {
+        position: absolute;
+        z-index: 1;
+        top: 0;
+        bottom: 0;
+        width: 52%;
+        background-color: #29070d;
+        background-image:
+          repeating-linear-gradient(90deg, transparent 0 7%, rgb(0 0 0 / 0.2) 8%, transparent 10% 16%),
+          linear-gradient(90deg, #180508, #480b14 48%, #27070c);
+        box-shadow: inset 0 0 90px rgb(0 0 0 / 0.62);
+        transition: transform 1.45s cubic-bezier(0.76, 0, 0.24, 1);
+        will-change: transform;
+      }
+
+      #theatre-curtain-loader .theatre-curtain__panel--left {
+        left: 0;
+        border-right: 1px solid rgb(237 28 36 / 0.55);
+        transform-origin: left center;
+      }
+
+      #theatre-curtain-loader .theatre-curtain__panel--right {
+        right: 0;
+        border-left: 1px solid rgb(237 28 36 / 0.55);
+        transform-origin: right center;
+      }
+
+      #theatre-curtain-loader .theatre-curtain__content {
+        position: relative;
+        z-index: 2;
+        display: grid;
+        justify-items: center;
+        gap: 1rem;
+        text-align: center;
+        transition: opacity 350ms ease, transform 500ms ease;
+      }
+
+      #theatre-curtain-loader .theatre-curtain__mark {
+        display: grid;
+        width: 3.75rem;
+        height: 3.75rem;
+        place-items: center;
+        border: 1px solid rgb(237 28 36 / 0.75);
+        border-radius: 50%;
+        color: #fff;
+        font: 700 1.6rem/1 Georgia, serif;
+        box-shadow: 0 0 35px rgb(237 28 36 / 0.22);
+      }
+
+      #theatre-curtain-loader .theatre-curtain__title {
+        margin: 0;
+        color: #fff;
+        font: 700 0.65rem/1.5 Arial, sans-serif;
+        letter-spacing: 0.28em;
+        text-transform: uppercase;
+      }
+
+      #theatre-curtain-loader .theatre-curtain__rule {
+        width: 6rem;
+        height: 1px;
+        overflow: hidden;
+        background: rgb(255 255 255 / 0.18);
+      }
+
+      #theatre-curtain-loader .theatre-curtain__rule::after {
+        display: block;
+        width: 40%;
+        height: 100%;
+        background: #ed1c24;
+        content: "";
+        animation: theatre-curtain-loading 900ms ease-in-out infinite;
+      }
+
+      #theatre-curtain-loader.is-opening .theatre-curtain__panel--left {
+        transform: translateX(-101%) rotateY(8deg);
+      }
+
+      #theatre-curtain-loader.is-opening .theatre-curtain__panel--right {
+        transform: translateX(101%) rotateY(-8deg);
+      }
+
+      #theatre-curtain-loader.is-opening .theatre-curtain__content {
+        opacity: 0;
+        transform: translateY(-12px) scale(0.96);
+      }
+
+      #theatre-curtain-loader.is-opening {
+        background: transparent;
+        pointer-events: none;
+        transition: background-color 800ms ease 500ms;
+      }
+
+      @keyframes theatre-curtain-loading {
+        from { transform: translateX(-110%); }
+        to { transform: translateX(260%); }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        #theatre-curtain-loader .theatre-curtain__panel,
+        #theatre-curtain-loader .theatre-curtain__content {
+          transition-duration: 1ms;
+        }
+
+        #theatre-curtain-loader .theatre-curtain__rule::after {
+          animation-duration: 1ms;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="theatre-curtain-loader" role="status" aria-label="Sahna tayyorlanmoqda">
+      <div class="theatre-curtain__panel theatre-curtain__panel--left"></div>
+      <div class="theatre-curtain__panel theatre-curtain__panel--right"></div>
+      <div class="theatre-curtain__content">
+        <div class="theatre-curtain__mark" aria-hidden="true">T</div>
+        <p class="theatre-curtain__title">Sahna ochilmoqda</p>
+        <div class="theatre-curtain__rule" aria-hidden="true"></div>
+      </div>
+    </div>
+    <script>
+      (() => {
+        const loader = document.getElementById("theatre-curtain-loader");
+        const root = document.documentElement;
+        const startedAt = performance.now();
+        let opening = false;
+        root.classList.add("theatre-loading");
+
+        const openCurtain = () => {
+          if (opening || !loader) return;
+          opening = true;
+          const delay = Math.max(0, 850 - (performance.now() - startedAt));
+          window.setTimeout(() => {
+            if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+              loader.remove();
+              root.classList.remove("theatre-loading");
+              return;
+            }
+            loader.classList.add("is-opening");
+            root.classList.remove("theatre-loading");
+            window.setTimeout(() => loader.remove(), 1650);
+          }, delay);
+        };
+
+        window.addEventListener("theatre:ready", openCurtain, { once: true });
+        window.setTimeout(openCurtain, 7000);
+      })();
+    </script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

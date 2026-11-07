@@ -1,0 +1,24 @@
+# A local API for frontend work, with made-up data and no backend code needed.
+# Published by the teatr-backend repo. See the README.
+#
+#   docker compose -f dev/docker-compose.yml up
+#
+# Data lives in the container: `down` resets it to the demo theatre.
+
+name: teatr-dev
+
+services:
+  api:
+    image: ghcr.io/why-morphy/teatr-backend-dev:latest
+    environment:
+      ALLOW_DEMO_SEED: "1"
+      DJANGO_SECRET_KEY: local-development-only
+      DJANGO_SUPERUSER_USERNAME: admin
+      DJANGO_SUPERUSER_EMAIL: admin@example.test
+      DJANGO_SUPERUSER_PASSWORD: admin
+    command: >-
+      sh -c "python manage.py seed_demo &&
+      exec gunicorn --bind 0.0.0.0:7000 --workers 2 config.wsgi:application"
+    ports:
+      # Only this machine can reach it, because the admin login is admin/admin.
+      - "127.0.0.1:8000:7000"
